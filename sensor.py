@@ -59,6 +59,8 @@ class IsyGltIlluminanceSensor(IsyGltModbusMixin, SensorEntity):
         self._address = cfg[CONF_ADDRESS] + 1  # CH1 is base+1 (high byte)
         self._prescaler: float = float(cfg.get(CONF_PRESCALER, 1))
         base_id = f"{hub_name}_{slugify(cfg[CONF_NAME])}_{cfg['type']}"
+        self.device_entry = self.ensure_device_entry(base_id, cfg[CONF_NAME], cfg["type"])
+
         self._attr_device_info = {
             "identifiers": {(DOMAIN, base_id)},
             "name": cfg[CONF_NAME],
@@ -66,7 +68,9 @@ class IsyGltIlluminanceSensor(IsyGltModbusMixin, SensorEntity):
             "model": cfg["type"],
         }
 
-        self.device_entry = self.ensure_device_entry(base_id, cfg[CONF_NAME], cfg["type"])
+        if self.device_entry:
+            self._attr_device_id = self.device_entry.id
+
         self._base_unique = base_id
         self._attr_unique_id = f"{base_id}_lux"
 

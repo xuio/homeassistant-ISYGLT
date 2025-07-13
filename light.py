@@ -72,14 +72,19 @@ class IsyGltBaseLight(IsyGltModbusMixin, LightEntity):
         self._address = cfg[CONF_ADDRESS]
         # Device info for grouping
         base_id = f"{hub_name}_{slugify(cfg[CONF_NAME])}_{cfg['type']}"
+        self.device_entry = self.ensure_device_entry(base_id, cfg[CONF_NAME], cfg["type"])
+
         self._attr_device_info = {
             "identifiers": {(DOMAIN, base_id)},
             "name": cfg[CONF_NAME],
             "manufacturer": "ISYGLT",
             "model": cfg["type"],
+            "via_device": None,
         }
 
-        self.device_entry = self.ensure_device_entry(base_id, cfg[CONF_NAME], cfg["type"])
+        if self.device_entry:
+            self._attr_device_id = self.device_entry.id
+
         # base unique id - subclasses append more if needed
         self._base_unique = base_id
 

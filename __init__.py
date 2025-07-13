@@ -85,13 +85,16 @@ async def async_setup(hass: HomeAssistant, config: Dict[str, Any]):
         return True
 
     hub_name: str = conf[CONF_HUB]
-    devices: List[Dict[str, Any]] = conf[CONF_DEVICES]
+    devices: List[Dict[str, Any]] = conf.get(CONF_DEVICES, [])
     poll_interval: float = conf.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
 
     # Determine bulk Modbus range for this hub
-    min_addr = min(d[CONF_ADDRESS] for d in devices)
-
     spans = []
+    if devices:
+        min_addr = min(d[CONF_ADDRESS] for d in devices)
+    else:
+        min_addr = 0
+
     for d in devices:
         reg_cnt = 1
         if d[CONF_TYPE] == DEVICE_TYPE_RGB_LIGHT:
@@ -143,6 +146,17 @@ async def async_setup(hass: HomeAssistant, config: Dict[str, Any]):
             _LOGGER.debug("Removing stale ISYGLT entity %s", entry.entity_id)
             ent_reg.async_remove(entry.entity_id)
 
+    # Remove stale devices with no remaining entities
+    from homeassistant.helpers import device_registry as dr
+    dev_reg = dr.async_get(hass)
+    for dev in list(dev_reg.devices.values()):
+        if not any(idt[0] == DOMAIN for idt in dev.identifiers):
+            continue
+        # if device has no entities now, remove it
+        if not any(e.device_id == dev.id for e in ent_reg.entities.values()):
+            _LOGGER.debug("Removing stale ISYGLT device %s", dev.id)
+            dev_reg.async_remove_device(dev.id)
+
     valid_ranges = [r for r in ranges if r[1] <= BLOCK_LIMIT]
     if valid_ranges:
         hass.data[DOMAIN].setdefault("bulk_range", {})[hub_name] = valid_ranges
@@ -170,4 +184,21 @@ async def async_setup(hass: HomeAssistant, config: Dict[str, Any]):
             )
         )
 
-    return True 
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry):
+    """Set up ISYGLT from a config entry (config flow)."""
+    from .const import CONF_POLL_INTERVAL
+
+    data = entry.data
+    options = entry.options
+
+    yaml_like = {
+        DOMAIN: {
+            CONF_HUB: data[CONF_HUB],
+            CONF_POLL_INTERVAL: data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL),
+            CONF_DEVICES: options.get(CONF_DEVICES, []),
+        }
+    }
+    return await async_setup(hass, yaml_like) 

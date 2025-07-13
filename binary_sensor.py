@@ -93,6 +93,8 @@ class IsyGltBaseBinarySensor(IsyGltModbusMixin, BinarySensorEntity):
         self._name_prefix = cfg[CONF_NAME]
         self._address = cfg[CONF_ADDRESS]
         base_id = f"{hub_name}_{slugify(cfg[CONF_NAME])}_{cfg['type']}"
+        self.device_entry = self.ensure_device_entry(base_id, self._name_prefix, cfg["type"])
+
         self._attr_device_info = {
             "identifiers": {(DOMAIN, base_id)},
             "name": self._name_prefix,
@@ -100,7 +102,9 @@ class IsyGltBaseBinarySensor(IsyGltModbusMixin, BinarySensorEntity):
             "model": cfg["type"],
         }
 
-        self.device_entry = self.ensure_device_entry(base_id, self._name_prefix, cfg["type"])
+        if self.device_entry:
+            self._attr_device_id = self.device_entry.id
+
         self._base_unique = base_id
 
         # Device registry auto-creation via _attr_device_info

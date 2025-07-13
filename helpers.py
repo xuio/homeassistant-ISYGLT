@@ -11,6 +11,7 @@ from homeassistant.components.modbus.const import (
     CALL_TYPE_REGISTER_HOLDING,
     CALL_TYPE_WRITE_REGISTERS,
 )
+from homeassistant.helpers import entity_registry as er
 
 import asyncio
 import time
@@ -108,6 +109,16 @@ class IsyGltModbusMixin:
             IsyGltModbusMixin._hub_queues[hub_name] = ModbusQueue(hass, self)
         self._queue: ModbusQueue = IsyGltModbusMixin._hub_queues[hub_name]
 
+    async def async_added_to_hass(self):  # type: ignore[override]
+        if hasattr(super(), "async_added_to_hass"):
+            await super().async_added_to_hass()  # type: ignore[misc]
+
+        if getattr(self, "device_entry", None):
+            ent_reg = er.async_get(self.hass)
+            entry = ent_reg.async_get(self.entity_id)
+            if entry and entry.device_id != self.device_entry.id:
+                ent_reg.async_update_entity(self.entity_id, device_id=self.device_entry.id)
+
     # ---------- device registry helper ----------
 
     def ensure_device_entry(self, base_id: str, name: str, model: str):
@@ -116,7 +127,27 @@ class IsyGltModbusMixin:
 
         dev_reg = dr.async_get(self.hass)
 
+        # 1. prefer an isyglt config-entry that matches this hub
+        ceid = None
+        for entry in self.hass.config_entries.async_entries(DOMAIN):
+            if entry.title == self._hub_name:
+                ceid = entry.entry_id
+                break
+        if ceid is None:
+            # 2. fallback: first isyglt entry
+            entries = self.hass.config_entries.async_entries(DOMAIN)
+            if entries:
+                ceid = entries[0].entry_id
+            else:
+                # 3. last resort: create a new dummy entry so we never fall back to Sun
+                ceid = self.hass.config_entries.async_create(
+                    domain=DOMAIN,
+                    title=self._hub_name,
+                    data={},
+                ).entry_id
+
         return dev_reg.async_get_or_create(
+            config_entry_id=ceid,
             identifiers={(DOMAIN, base_id)},
             manufacturer="ISYGLT",
             name=name,

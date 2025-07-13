@@ -95,6 +95,10 @@ class IsyGltBaseSwitch(IsyGltModbusMixin, SwitchEntity):
         }
 
         self.device_entry = self.ensure_device_entry(base_id, self._name_prefix, cfg["type"])
+
+        if self.device_entry:
+            self._attr_device_id = self.device_entry.id
+
         self._base_unique = base_id
 
         dev_reg = dr.async_get(hass)
