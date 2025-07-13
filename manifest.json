@@ -1,0 +1,9 @@
+{
+  "domain": "isyglt",
+  "name": "ISYGLT Modbus Devices",
+  "version": "0.0.1",
+  "documentation": "https://github.com/example/isyglt-homeassistant",
+  "requirements": [],
+  "dependencies": ["modbus"],
+  "codeowners": ["@your_github_username"]
+} 
