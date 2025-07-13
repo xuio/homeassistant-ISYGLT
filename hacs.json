@@ -1,0 +1,9 @@
+{
+  "name": "ISYGLT Modbus-TCP Integration",
+  "content_in_root": true,
+  "domain": "isyglt",
+  "homeassistant": "2024.0.0",
+  "iot_class": "local_polling",
+  "render_readme": true,
+  "zip_release": false
+} 
