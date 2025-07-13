@@ -78,6 +78,8 @@ class IsyGltBaseLight(IsyGltModbusMixin, LightEntity):
             "manufacturer": "ISYGLT",
             "model": cfg["type"],
         }
+
+        self.device_entry = self.ensure_device_entry(base_id, cfg[CONF_NAME], cfg["type"])
         # base unique id - subclasses append more if needed
         self._base_unique = base_id
 

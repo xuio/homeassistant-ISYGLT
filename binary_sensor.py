@@ -99,6 +99,8 @@ class IsyGltBaseBinarySensor(IsyGltModbusMixin, BinarySensorEntity):
             "manufacturer": "ISYGLT",
             "model": cfg["type"],
         }
+
+        self.device_entry = self.ensure_device_entry(base_id, self._name_prefix, cfg["type"])
         self._base_unique = base_id
 
         # Device registry auto-creation via _attr_device_info

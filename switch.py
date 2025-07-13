@@ -93,6 +93,8 @@ class IsyGltBaseSwitch(IsyGltModbusMixin, SwitchEntity):
             "manufacturer": "ISYGLT",
             "model": cfg["type"],
         }
+
+        self.device_entry = self.ensure_device_entry(base_id, self._name_prefix, cfg["type"])
         self._base_unique = base_id
 
         dev_reg = dr.async_get(hass)

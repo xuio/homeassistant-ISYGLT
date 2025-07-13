@@ -65,6 +65,9 @@ class IsyGltIlluminanceSensor(IsyGltModbusMixin, SensorEntity):
             "manufacturer": "ISYGLT",
             "model": cfg["type"],
         }
+
+        self.device_entry = self.ensure_device_entry(base_id, cfg[CONF_NAME], cfg["type"])
+        self._base_unique = base_id
         self._attr_unique_id = f"{base_id}_lux"
 
         dev_reg = dr.async_get(hass)

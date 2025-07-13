@@ -108,6 +108,21 @@ class IsyGltModbusMixin:
             IsyGltModbusMixin._hub_queues[hub_name] = ModbusQueue(hass, self)
         self._queue: ModbusQueue = IsyGltModbusMixin._hub_queues[hub_name]
 
+    # ---------- device registry helper ----------
+
+    def ensure_device_entry(self, base_id: str, name: str, model: str):
+        """Create or fetch device registry entry for this entity."""
+        from homeassistant.helpers import device_registry as dr
+
+        dev_reg = dr.async_get(self.hass)
+
+        return dev_reg.async_get_or_create(
+            identifiers={(DOMAIN, base_id)},
+            manufacturer="ISYGLT",
+            name=name,
+            model=model,
+        )
+
     @property
     def config_entry_id(self) -> str | None:
         """Try to find the Modbus config entry id matching our hub."""
