@@ -9,6 +9,8 @@ from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import slugify
 
 from .const import (
     DOMAIN,
@@ -24,6 +26,7 @@ from .const import (
     DEVICE_TYPE_BUTTON_GRID,
     DEVICE_TYPE_IO_MODULE,
     DEVICE_TYPE_DIMMER,
+    DEVICE_TYPE_GROUP_SWITCH,
     CONF_POLL_INTERVAL,
     DEFAULT_POLL_INTERVAL,
     CONF_PRESCALER,
@@ -127,6 +130,18 @@ async def async_setup(hass: HomeAssistant, config: Dict[str, Any]):
     hass.data[DOMAIN]["poll_interval"] = poll_interval
     hass.data[DOMAIN].setdefault("bulk_throttle", {})[hub_name] = 0.0
     hass.data[DOMAIN].setdefault("last_write", {})[hub_name] = 0.0
+
+    # --- Clean up stale entities ---
+    valid_prefixes = [f"{hub_name}_{slugify(d[CONF_NAME])}_{d[CONF_TYPE]}" for d in devices]
+    ent_reg = er.async_get(hass)
+    for entry in list(ent_reg.entities.values()):
+        if entry.domain not in ("light", "switch", "binary_sensor", "sensor"):
+            continue
+        if entry.platform != DOMAIN:
+            continue
+        if not any(entry.unique_id.startswith(p) for p in valid_prefixes):
+            _LOGGER.debug("Removing stale ISYGLT entity %s", entry.entity_id)
+            ent_reg.async_remove(entry.entity_id)
 
     valid_ranges = [r for r in ranges if r[1] <= BLOCK_LIMIT]
     if valid_ranges:

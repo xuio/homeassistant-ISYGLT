@@ -8,6 +8,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers import device_registry as dr
+from homeassistant.util import slugify
 
 from .const import (
     CONF_ADDRESS,
@@ -85,7 +86,7 @@ class IsyGltBaseSwitch(IsyGltModbusMixin, SwitchEntity):
         IsyGltModbusMixin.__init__(self, hass, hub_name)
         self._name_prefix = cfg[CONF_NAME]
         self._address = cfg[CONF_ADDRESS]
-        base_id = f"{hub_name}_{self._address}"
+        base_id = f"{hub_name}_{slugify(cfg[CONF_NAME])}_{cfg['type']}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, base_id)},
             "name": self._name_prefix,
